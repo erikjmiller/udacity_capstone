@@ -1,0 +1,163 @@
+version: "3"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        uid: ${UID}
+        scala_version: 2.11.12
+        sbt_version: 0.13.18
+    image: sparkkuduload
+    ports:
+      - 4040:4040
+    volumes:
+      - .:/app
+      # - ~/.ivy2:/home/app/.ivy2  # uncomment to pull in deps when the container is started
+      # - ~/.sbt:/home/app/.sbt    # uncomment to pull in deps when the container is started
+    environment:
+      SBT_OPTS: "-XX:+CMSClassUnloadingEnabled -Xmx1G"
+      KUDU_MASTERS: "kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251"
+      NDS_URL: "not-implemented.com"
+      ELASTICSEARCH_HOST: "http://elasticsearch:9200"
+  elasticsearch:
+    image:  elasticsearch:7.4.0
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  kudu-master-1:
+    image: apache/kudu:${KUDU_QUICKSTART_VERSION:-latest}
+    ports:
+      - "7051:7051"
+      - "8051:8051"
+    command: ["master"]
+    volumes:
+      - kudu-master-1:/var/lib/kudu
+    environment:
+      - KUDU_MASTERS=kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251
+      - >
+        MASTER_ARGS=--fs_wal_dir=/var/lib/kudu/master
+        --rpc_bind_addresses=0.0.0.0:7051
+        --rpc_advertised_addresses=${KUDU_QUICKSTART_IP:?Please set KUDU_QUICKSTART_IP environment variable}:7051
+        --webserver_port=8051
+        --webserver_advertised_addresses=${KUDU_QUICKSTART_IP}:8051
+        --webserver_doc_root=/opt/kudu/www
+        --stderrthreshold=0
+  kudu-master-2:
+    image: apache/kudu:${KUDU_QUICKSTART_VERSION:-latest}
+    ports:
+      - "7151:7151"
+      - "8151:8151"
+    command: ["master"]
+    volumes:
+      - kudu-master-2:/var/lib/kudu
+    environment:
+      - KUDU_MASTERS=kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251
+      - >
+        MASTER_ARGS=--fs_wal_dir=/var/lib/kudu/master
+        --rpc_bind_addresses=0.0.0.0:7151
+        --rpc_advertised_addresses=${KUDU_QUICKSTART_IP}:7151
+        --webserver_port=8151
+        --webserver_advertised_addresses=${KUDU_QUICKSTART_IP}:8151
+        --webserver_doc_root=/opt/kudu/www
+        --stderrthreshold=0
+  kudu-master-3:
+    image: apache/kudu:${KUDU_QUICKSTART_VERSION:-latest}
+    ports:
+      - "7251:7251"
+      - "8251:8251"
+    command: ["master"]
+    volumes:
+      - kudu-master-3:/var/lib/kudu
+    environment:
+      - KUDU_MASTERS=kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251
+      - >
+        MASTER_ARGS=--fs_wal_dir=/var/lib/kudu/master
+        --rpc_bind_addresses=0.0.0.0:7251
+        --rpc_advertised_addresses=${KUDU_QUICKSTART_IP}:7251
+        --webserver_port=8251
+        --webserver_advertised_addresses=${KUDU_QUICKSTART_IP}:8251
+        --webserver_doc_root=/opt/kudu/www
+        --stderrthreshold=0
+  kudu-tserver-1:
+    image: apache/kudu:${KUDU_QUICKSTART_VERSION:-latest}
+    depends_on:
+      - kudu-master-1
+      - kudu-master-2
+      - kudu-master-3
+    ports:
+      - "7050:7050"
+      - "8050:8050"
+    command: ["tserver"]
+    volumes:
+      - kudu-tserver-1:/var/lib/kudu
+    environment:
+      - KUDU_MASTERS=kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251
+      - >
+        TSERVER_ARGS=--fs_wal_dir=/var/lib/kudu/tserver
+        --rpc_bind_addresses=0.0.0.0:7050
+        --rpc_advertised_addresses=${KUDU_QUICKSTART_IP}:7050
+        --webserver_port=8050
+        --webserver_advertised_addresses=${KUDU_QUICKSTART_IP}:8050
+        --webserver_doc_root=/opt/kudu/www
+        --stderrthreshold=0
+  kudu-tserver-2:
+    image: apache/kudu:${KUDU_QUICKSTART_VERSION:-latest}
+    depends_on:
+      - kudu-master-1
+      - kudu-master-2
+      - kudu-master-3
+    ports:
+      - "7150:7150"
+      - "8150:8150"
+    command: ["tserver"]
+    volumes:
+      - kudu-tserver-2:/var/lib/kudu
+    environment:
+      - KUDU_MASTERS=kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251
+      - >
+        TSERVER_ARGS=--fs_wal_dir=/var/lib/kudu/tserver
+        --rpc_bind_addresses=0.0.0.0:7150
+        --rpc_advertised_addresses=${KUDU_QUICKSTART_IP}:7150
+        --webserver_port=8150
+        --webserver_advertised_addresses=${KUDU_QUICKSTART_IP}:8150
+        --webserver_doc_root=/opt/kudu/www
+        --stderrthreshold=0
+  kudu-tserver-3:
+    image: apache/kudu:${KUDU_QUICKSTART_VERSION:-latest}
+    depends_on:
+      - kudu-master-1
+      - kudu-master-2
+      - kudu-master-3
+    ports:
+      - "7250:7250"
+      - "8250:8250"
+    command: ["tserver"]
+    volumes:
+      - kudu-tserver-3:/var/lib/kudu
+    environment:
+      - KUDU_MASTERS=kudu-master-1:7051,kudu-master-2:7151,kudu-master-3:7251
+      - >
+        TSERVER_ARGS=--fs_wal_dir=/var/lib/kudu/tserver
+        --rpc_bind_addresses=0.0.0.0:7250
+        --rpc_advertised_addresses=${KUDU_QUICKSTART_IP}:7250
+        --webserver_port=8250
+        --webserver_advertised_addresses=${KUDU_QUICKSTART_IP}:8250
+        --webserver_doc_root=/opt/kudu/www
+        --stderrthreshold=0
+volumes:
+  kudu-master-1:
+  kudu-master-2:
+  kudu-master-3:
+  kudu-tserver-1:
+  kudu-tserver-2:
+  kudu-tserver-3:

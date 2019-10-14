@@ -1,0 +1,33 @@
+
+
+*.class
+*.log
+
+# sbt specific
+.ivy2
+.sbt
+.cache/
+.history/
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+.idea
+*.iml
+worksheet.sc
+
+# Docker Dev Stuff
+/docker/app/.bash_history
+/docker/app/.scala_history
+/docker/.initialized
+
+# Spark
+spark-warehouse
+
