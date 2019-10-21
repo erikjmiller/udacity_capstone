@@ -1,5 +1,18 @@
 
 ## Overview
+This application is a combination of work with two purposes.
+
+1. Complete the Udacity Capstone project
+2. Use the capstone as a means to also learn and complete work relevant to my current employment as a software engineer.
+
+So, I decided to use a set of technologies pertinent to my current job and the Udacity coursework.
+
+NOTE - The dataset used is a small sample of existing data from my current employer, I understand there's an assumption that 
+the dataset be 1 million records, which is entirely possible, however it would require a lengthy seed process to populate
+elasticsearch and has little relevance on what the application is actually doing.
+
+### What It Does
+
 This application is developed as a cli app, which will eventually be a service to load program data from 
 elasticsearch to kudu using scala, akka, akka streams, and spark.
 
